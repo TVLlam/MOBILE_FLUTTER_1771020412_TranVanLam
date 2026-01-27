@@ -17,6 +17,7 @@ public class TournamentDto
     public decimal PrizePool { get; set; }
     public string Status { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    public bool IsRegistered { get; set; }
 }
 
 public class CreateTournamentDto

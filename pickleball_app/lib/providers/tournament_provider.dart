@@ -150,10 +150,97 @@ class TournamentsNotifier extends StateNotifier<TournamentsState> {
   Future<bool> registerTournament(int tournamentId) async {
     try {
       await _tournamentService.registerTournament(tournamentId);
+
+      // Update selectedTournament to reflect registration status
+      if (state.selectedTournament?.id == tournamentId.toString()) {
+        // Create a copy of the tournament model with isRegistered = true
+        final updatedTournament = TournamentModel(
+          id: state.selectedTournament!.id,
+          name: state.selectedTournament!.name,
+          description: state.selectedTournament!.description,
+          startDate: state.selectedTournament!.startDate,
+          endDate: state.selectedTournament!.endDate,
+          registrationDeadline: state.selectedTournament!.registrationDeadline,
+          format: state.selectedTournament!.format,
+          status: state.selectedTournament!.status,
+          entryFee: state.selectedTournament!.entryFee,
+          prizePool: state.selectedTournament!.prizePool,
+          maxParticipants: state.selectedTournament!.maxParticipants,
+          currentParticipants:
+              state.selectedTournament!.currentParticipants + 1,
+          location: state.selectedTournament!.location,
+          imageUrl: state.selectedTournament!.imageUrl,
+          rules: state.selectedTournament!.rules,
+          prizes: state.selectedTournament!.prizes,
+          createdAt: state.selectedTournament!.createdAt,
+          isRegistered: true,
+        );
+        // Create completely new state to ensure Riverpod detects change
+        state = TournamentsState(
+          tournaments: state.tournaments,
+          selectedTournament: updatedTournament,
+          standings: state.standings,
+          matches: state.matches,
+          isLoading: false,
+          hasMore: state.hasMore,
+          currentPage: state.currentPage,
+          error: null,
+          filterStatus: state.filterStatus,
+        );
+      }
+
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> cancelRegistration(int tournamentId) async {
+    try {
+      final result = await _tournamentService.cancelRegistration(tournamentId);
+
+      // Update selectedTournament to reflect cancellation
+      if (state.selectedTournament?.id == tournamentId.toString()) {
+        final updatedTournament = TournamentModel(
+          id: state.selectedTournament!.id,
+          name: state.selectedTournament!.name,
+          description: state.selectedTournament!.description,
+          startDate: state.selectedTournament!.startDate,
+          endDate: state.selectedTournament!.endDate,
+          registrationDeadline: state.selectedTournament!.registrationDeadline,
+          format: state.selectedTournament!.format,
+          status: state.selectedTournament!.status,
+          entryFee: state.selectedTournament!.entryFee,
+          prizePool: state.selectedTournament!.prizePool,
+          maxParticipants: state.selectedTournament!.maxParticipants,
+          currentParticipants:
+              state.selectedTournament!.currentParticipants - 1,
+          location: state.selectedTournament!.location,
+          imageUrl: state.selectedTournament!.imageUrl,
+          rules: state.selectedTournament!.rules,
+          prizes: state.selectedTournament!.prizes,
+          createdAt: state.selectedTournament!.createdAt,
+          isRegistered: false,
+        );
+        // Create completely new state to ensure Riverpod detects change
+        state = TournamentsState(
+          tournaments: state.tournaments,
+          selectedTournament: updatedTournament,
+          standings: state.standings,
+          matches: state.matches,
+          isLoading: false,
+          hasMore: state.hasMore,
+          currentPage: state.currentPage,
+          error: null,
+          filterStatus: state.filterStatus,
+        );
+      }
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return null;
     }
   }
 
@@ -231,55 +318,46 @@ final upcomingMatchesProvider = FutureProvider<List<MatchModel>>((ref) async {
     // Return demo data if API fails
     return [
       MatchModel(
-        id: 1,
-        tournamentId: 1,
+        id: '1',
+        tournamentId: '1',
         tournamentName: 'Giải đấu mùa xuân 2026',
-        homeTeamId: 1,
-        homeTeamName: 'Team Alpha',
-        awayTeamId: 2,
-        awayTeamName: 'Team Beta',
-        matchDate: DateTime.now().add(const Duration(days: 2)),
-        courtId: 1,
+        team1Name: 'Team Alpha',
+        team2Name: 'Team Beta',
+        scheduledTime: DateTime.now().add(const Duration(days: 2)),
+        courtId: '1',
         courtName: 'Sân 1',
-        round: 'Vòng bảng',
+        round: 1,
         status: MatchStatus.scheduled,
-        homeScore: null,
-        awayScore: null,
-        createdAt: DateTime.now(),
+        player1Score: null,
+        player2Score: null,
       ),
       MatchModel(
-        id: 2,
-        tournamentId: 1,
+        id: '2',
+        tournamentId: '1',
         tournamentName: 'Giải đấu mùa xuân 2026',
-        homeTeamId: 3,
-        homeTeamName: 'Team Gamma',
-        awayTeamId: 4,
-        awayTeamName: 'Team Delta',
-        matchDate: DateTime.now().add(const Duration(days: 5)),
-        courtId: 2,
+        team1Name: 'Team Gamma',
+        team2Name: 'Team Delta',
+        scheduledTime: DateTime.now().add(const Duration(days: 5)),
+        courtId: '2',
         courtName: 'Sân 2',
-        round: 'Tứ kết',
+        round: 2,
         status: MatchStatus.scheduled,
-        homeScore: null,
-        awayScore: null,
-        createdAt: DateTime.now(),
+        player1Score: null,
+        player2Score: null,
       ),
       MatchModel(
-        id: 3,
-        tournamentId: 2,
+        id: '3',
+        tournamentId: '2',
         tournamentName: 'Giải nội bộ tháng 1',
-        homeTeamId: 5,
-        homeTeamName: 'Team Epsilon',
-        awayTeamId: 6,
-        awayTeamName: 'Team Zeta',
-        matchDate: DateTime.now().add(const Duration(days: 7)),
-        courtId: 3,
+        team1Name: 'Team Epsilon',
+        team2Name: 'Team Zeta',
+        scheduledTime: DateTime.now().add(const Duration(days: 7)),
+        courtId: '3',
         courtName: 'Sân 3',
-        round: 'Bán kết',
+        round: 3,
         status: MatchStatus.scheduled,
-        homeScore: null,
-        awayScore: null,
-        createdAt: DateTime.now(),
+        player1Score: null,
+        player2Score: null,
       ),
     ];
   }

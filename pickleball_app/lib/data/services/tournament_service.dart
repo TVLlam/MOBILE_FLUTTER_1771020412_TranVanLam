@@ -86,6 +86,18 @@ class TournamentService {
     return joinTournament(tournamentId, teamName: teamName);
   }
 
+  /// Hủy đăng ký giải đấu (hoàn lại 50% phí)
+  Future<Map<String, dynamic>> cancelRegistration(int tournamentId) async {
+    try {
+      final response = await _dio.post(
+        '${ApiEndpoints.tournaments}/$tournamentId/cancel',
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Lấy bảng xếp hạng giải đấu
   Future<List<TournamentStanding>> getTournamentStandings(
     int tournamentId,

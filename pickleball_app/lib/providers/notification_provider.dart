@@ -77,8 +77,10 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
   Future<void> loadUnreadCount() async {
     try {
-      final count = await _notificationService.getUnreadCount();
-      state = state.copyWith(unreadCount: count);
+      // TODO: Backend chưa có endpoint /notifications/unread-count
+      // final count = await _notificationService.getUnreadCount();
+      // state = state.copyWith(unreadCount: count);
+      state = state.copyWith(unreadCount: 0);
     } catch (_) {}
   }
 
@@ -197,40 +199,43 @@ final newsProvider = StateNotifierProvider<NewsNotifier, NewsState>((ref) {
 final pinnedNewsProvider = Provider<List<NewsModel>>((ref) {
   final news = ref.watch(newsProvider).news;
   final pinnedNews = news.where((n) => n.isPinned).toList();
-  
+
   // Return demo data if no pinned news
   if (pinnedNews.isEmpty) {
     return [
       NewsModel(
         id: 'demo-1',
         title: '🎉 Khai mạc giải đấu mùa xuân 2026',
-        content: 'CLB Pickleball hân hạnh công bố giải đấu lớn nhất năm sẽ diễn ra vào tháng 3/2026. Đăng ký ngay để không bỏ lỡ!',
+        content:
+            'CLB Pickleball hân hạnh công bố giải đấu lớn nhất năm sẽ diễn ra vào tháng 3/2026. Đăng ký ngay để không bỏ lỡ!',
         imageUrl: null,
         isPinned: true,
-        isRead: false,
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+        viewCount: 0,
+        createdDate: DateTime.now().subtract(const Duration(hours: 2)),
       ),
       NewsModel(
         id: 'demo-2',
         title: '🏆 Chúc mừng các VĐV đạt rank DUPR mới',
-        content: '10 thành viên vừa đạt mốc rank DUPR mới trong tháng này. Chúc mừng các bạn và tiếp tục cố gắng!',
+        content:
+            '10 thành viên vừa đạt mốc rank DUPR mới trong tháng này. Chúc mừng các bạn và tiếp tục cố gắng!',
         imageUrl: null,
         isPinned: true,
-        isRead: false,
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        viewCount: 0,
+        createdDate: DateTime.now().subtract(const Duration(days: 1)),
       ),
       NewsModel(
         id: 'demo-3',
         title: '⚡ Khuyến mãi đặt sân cuối tuần',
-        content: 'Giảm 20% cho tất cả các booking vào thứ 7 và chủ nhật. Áp dụng từ ngày 25/1 đến 31/1/2026.',
+        content:
+            'Giảm 20% cho tất cả các booking vào thứ 7 và chủ nhật. Áp dụng từ ngày 25/1 đến 31/1/2026.',
         imageUrl: null,
         isPinned: true,
-        isRead: false,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+        viewCount: 0,
+        createdDate: DateTime.now().subtract(const Duration(days: 2)),
       ),
     ];
   }
-  
+
   return pinnedNews;
 });
 

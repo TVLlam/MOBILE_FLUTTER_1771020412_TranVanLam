@@ -79,4 +79,80 @@ public class WalletController : ControllerBase
         
         return Ok(transaction);
     }
+
+    [HttpPut("admin/approve/{transactionId}")]
+    [Authorize(Roles = "Admin,Treasurer")]
+    public async Task<IActionResult> ApproveDeposit(int transactionId, [FromBody] ApproveDepositDto dto)
+    {
+        var transaction = await _context.WalletTransactions
+            .Include(t => t.Member)
+            .FirstOrDefaultAsync(t => t.Id == transactionId);
+
+        if (transaction == null)
+            return NotFound(new { message = "Transaction not found" });
+
+        if (transaction.Type != "Deposit")
+            return BadRequest(new { message = "Only deposit transactions can be approved" });
+
+        if (transaction.Status != "Pending")
+            return BadRequest(new { message = "Transaction is not pending" });
+
+        if (dto.Approved)
+        {
+            // Approve and add balance
+            var balanceBefore = transaction.Member!.WalletBalance;
+            transaction.Member.WalletBalance += transaction.Amount;
+            
+            transaction.BalanceBefore = balanceBefore;
+            transaction.BalanceAfter = transaction.Member.WalletBalance;
+            transaction.Status = "Completed";
+            transaction.Description = (transaction.Description ?? "Deposit") + " - Approved by admin";
+        }
+        else
+        {
+            // Reject
+            transaction.Status = "Rejected";
+            transaction.Description = (transaction.Description ?? "Deposit") + $" - Rejected: {dto.Reason}";
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { 
+            message = dto.Approved ? "Deposit approved" : "Deposit rejected",
+            transaction = new WalletTransactionDto
+            {
+                Id = transaction.Id,
+                MemberId = transaction.MemberId,
+                Type = transaction.Type,
+                Amount = transaction.Amount,
+                BalanceBefore = transaction.BalanceBefore,
+                BalanceAfter = transaction.BalanceAfter,
+                Description = transaction.Description,
+                Status = transaction.Status,
+                CreatedAt = transaction.CreatedAt
+            }
+        });
+    }
+
+    [HttpGet("admin/pending")]
+    [Authorize(Roles = "Admin,Treasurer")]
+    public async Task<ActionResult<IEnumerable<object>>> GetPendingDeposits()
+    {
+        var pending = await _context.WalletTransactions
+            .Include(t => t.Member)
+            .Where(t => t.Type == "Deposit" && t.Status == "Pending")
+            .OrderByDescending(t => t.CreatedAt)
+            .Select(t => new
+            {
+                id = t.Id,
+                memberId = t.MemberId,
+                memberName = t.Member!.FullName,
+                amount = t.Amount,
+                description = t.Description,
+                createdAt = t.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(pending);
+    }
 }

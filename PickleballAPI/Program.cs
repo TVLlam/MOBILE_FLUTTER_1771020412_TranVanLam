@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PickleballAPI.Data;
+using PickleballAPI.Hubs;
 using PickleballAPI.Models;
 using PickleballAPI.Services;
 
@@ -47,6 +48,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
     };
+
+    // Configure JWT for SignalR
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Add Services
@@ -54,17 +70,24 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 
+// Add Background Services
+builder.Services.AddHostedService<BookingCleanupService>();
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
         builder =>
         {
-            builder.AllowAnyOrigin()
+            builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost" || new Uri(origin).Host == "127.0.0.1")
                    .AllowAnyMethod()
-                   .AllowAnyHeader();
+                   .AllowAnyHeader()
+                   .AllowCredentials();
         });
 });
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -98,5 +121,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<PcmHub>("/hubs/pcm");
 
 app.Run();

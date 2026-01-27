@@ -106,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Features highlights
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -247,14 +247,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Login section title
                 const Text(
                   'Đăng nhập tài khoản',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -376,7 +373,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Admin: admin@vptpn.com / Admin@123\nMember: member@vptpn.com / Member@123',
+                        'Admin: admin@pickleball.com / Admin@123\nMember: member@pickleball.com / Member@123',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -388,7 +385,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () {
-                                _emailController.text = 'admin@vptpn.com';
+                                _emailController.text = 'admin@pickleball.com';
                                 _passwordController.text = 'Admin@123';
                               },
                               style: OutlinedButton.styleFrom(
@@ -404,7 +401,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () {
-                                _emailController.text = 'member@vptpn.com';
+                                _emailController.text = 'member@pickleball.com';
                                 _passwordController.text = 'Member@123';
                               },
                               style: OutlinedButton.styleFrom(

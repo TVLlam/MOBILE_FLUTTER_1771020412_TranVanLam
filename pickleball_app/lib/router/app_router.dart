@@ -19,6 +19,8 @@ import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/members/screens/members_screen.dart';
 import '../features/members/screens/member_detail_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
+import '../features/admin/screens/admin_dashboard_screen.dart';
+import '../features/news/screens/news_detail_screen.dart';
 
 // Router Provider
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -174,6 +176,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/notifications',
             name: 'notifications',
             builder: (context, state) => const NotificationsScreen(),
+          ),
+
+          // News Detail
+          GoRoute(
+            path: '/news-detail',
+            name: 'news-detail',
+            builder: (context, state) {
+              final id = state.extra as int;
+              return NewsDetailScreen(newsId: id);
+            },
+          ),
+
+          // Admin
+          GoRoute(
+            path: '/admin',
+            name: 'admin',
+            builder: (context, state) => const AdminDashboardScreen(),
           ),
         ],
       ),

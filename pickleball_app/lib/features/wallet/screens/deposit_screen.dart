@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../providers/providers.dart';
@@ -227,37 +228,160 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
   }
 
   Widget _buildBankInfoCard() {
+    final user = ref.watch(currentUserProvider);
+    final transferContent =
+        'VPTPN ${user?.member?.fullName ?? ''} ${user?.member?.phoneNumber ?? ''}';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary.withOpacity(0.1), Colors.white],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.account_balance, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
-                'Thông tin chuyển khoản',
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.qr_code_2,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Quét mã QR để chuyển tiền',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
-          const Divider(height: 24),
-          _buildInfoRow('Ngân hàng', 'Vietcombank'),
-          _buildInfoRow('Số tài khoản', '1234567890'),
-          _buildInfoRow('Chủ tài khoản', 'CLB PICKLEBALL VỢT THỦ PHỐ NÚI'),
-          _buildInfoRow('Nội dung CK', 'VPTPN [Họ tên] [SĐT]'),
+          const SizedBox(height: 16),
+
+          // QR Code Image
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // VietQR Code
+                  QrImageView(
+                    data: _generateVietQRData(transferContent),
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Colors.black,
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Colors.black,
+                    ),
+                    embeddedImage: null,
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/icons/vietqr.png',
+                        height: 20,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Quét mã QR bằng app ngân hàng',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          const Divider(),
+          const SizedBox(height: 16),
+
+          const Row(
+            children: [
+              Icon(Icons.account_balance, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Hoặc chuyển khoản thủ công',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow('Ngân hàng', 'Napas 24/7'),
+          _buildInfoRow('Số tài khoản', '100714082005'),
+          _buildInfoRow('Chủ tài khoản', 'TRAN VAN LAM'),
+          _buildInfoRow('Nội dung CK', transferContent),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  color: AppColors.warning,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Vui lòng nhập đúng nội dung: $transferContent',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -346,5 +470,20 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
         ),
       ],
     );
+  }
+
+  String _generateVietQRData(String transferContent) {
+    // VietQR format based on image information
+    // Bank: Napas 24/7
+    // Account: 100714082005
+    // Name: TRAN VAN LAM
+    // Format: Bank ID|Account Number|Name|Amount|Transfer Content
+
+    final amount = _amountController.text.isNotEmpty
+        ? _amountController.text.replaceAll(',', '')
+        : '0';
+
+    // Using VietQR standard format
+    return 'https://img.vietqr.io/image/970407-100714082005-compact2.jpg?amount=$amount&addInfo=${Uri.encodeComponent(transferContent)}';
   }
 }

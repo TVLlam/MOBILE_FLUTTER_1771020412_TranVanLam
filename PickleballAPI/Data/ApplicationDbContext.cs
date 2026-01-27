@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Tournament> Tournaments { get; set; }
     public DbSet<TournamentRegistration> TournamentRegistrations { get; set; }
     public DbSet<Match> Matches { get; set; }
+    public DbSet<News> News { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

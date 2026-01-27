@@ -150,3 +150,4 @@ D:\KI 2_2025-2026\MOBILE\BT_TUAN8\PickleballAPI\obj\Debug\net8.0\refint\Pickleba
 D:\KI 2_2025-2026\MOBILE\BT_TUAN8\PickleballAPI\obj\Debug\net8.0\PickleballAPI.pdb
 D:\KI 2_2025-2026\MOBILE\BT_TUAN8\PickleballAPI\obj\Debug\net8.0\PickleballAPI.genruntimeconfig.cache
 D:\KI 2_2025-2026\MOBILE\BT_TUAN8\PickleballAPI\obj\Debug\net8.0\ref\PickleballAPI.dll
+D:\KI 2_2025-2026\MOBILE\BT_TUAN8\PickleballAPI\obj\Debug\net8.0\PickleballAPI.sourcelink.json

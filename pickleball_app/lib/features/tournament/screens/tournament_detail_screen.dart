@@ -7,6 +7,7 @@ import '../../../data/models/enums.dart';
 import '../../../providers/providers.dart';
 import '../widgets/standings_table.dart';
 import '../widgets/match_list.dart';
+import '../widgets/tournament_bracket_widget.dart';
 
 class TournamentDetailScreen extends ConsumerStatefulWidget {
   final int tournamentId;
@@ -25,8 +26,13 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _loadData();
+    _tabController = TabController(length: 4, vsync: this);
+    // Load data after first frame to avoid rebuild loop
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadData();
+      }
+    });
   }
 
   @override
@@ -78,6 +84,7 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
               tabs: const [
                 Tab(text: 'Thông tin'),
                 Tab(text: 'Bảng đấu'),
+                Tab(text: 'Sơ đồ'),
                 Tab(text: 'Trận đấu'),
               ],
             ),
@@ -87,6 +94,7 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
                 children: [
                   _buildInfoTab(tournament),
                   _buildStandingsTab(tournamentsState),
+                  _buildBracketTab(tournamentsState, tournament),
                   _buildMatchesTab(tournamentsState),
                 ],
               ),
@@ -423,11 +431,45 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
     );
   }
 
+  Widget _buildBracketTab(TournamentState state, TournamentModel tournament) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.matches.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.account_tree, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('Sơ đồ thi đấu sẽ được cập nhật sau'),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => ref
+          .read(tournamentsProvider.notifier)
+          .loadMatches(widget.tournamentId),
+      child: TournamentBracketWidget(
+        matches: state.matches,
+        tournamentFormat: tournament.format.displayName,
+      ),
+    );
+  }
+
   Widget _buildBottomBar(TournamentModel tournament) {
-    final user = ref.watch(currentUserProvider);
     final isRegistered = tournament.isRegistered;
 
-    if (tournament.status != TournamentStatus.upcoming) {
+    // Hiển thị nút đăng ký cho các trạng thái: upcoming, open, registering
+    final canRegister =
+        tournament.status == TournamentStatus.upcoming ||
+        tournament.status == TournamentStatus.open ||
+        tournament.status == TournamentStatus.registering;
+
+    if (!canRegister) {
       return const SizedBox.shrink();
     }
 
@@ -444,24 +486,85 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
         ],
       ),
       child: SafeArea(
-        child: ElevatedButton(
-          onPressed: isRegistered ? null : _registerTournament,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isRegistered ? Colors.grey : AppColors.primary,
-          ),
-          child: Text(isRegistered ? 'ĐÃ ĐĂNG KÝ' : 'ĐĂNG KÝ THAM GIA'),
-        ),
+        child: isRegistered
+            ? Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _cancelRegistration(tournament),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text(
+                        'HỦY ĐĂNG KÝ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text(
+                        'ĐÃ ĐĂNG KÝ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : ElevatedButton(
+                onPressed: _registerTournament,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text(
+                  'ĐĂNG KÝ NGAY',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
       ),
     );
   }
 
   Future<void> _registerTournament() async {
+    final tournamentsState = ref.read(tournamentsProvider);
+    final tournament = tournamentsState.selectedTournament;
+
+    if (tournament == null) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận đăng ký'),
-        content: const Text(
-          'Bạn có chắc chắn muốn đăng ký tham gia giải đấu này?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Bạn có chắc chắn muốn đăng ký giải đấu này?'),
+            const SizedBox(height: 12),
+            Text(
+              'Entry fee: ${tournament.entryFee.toStringAsFixed(0)}đ sẽ được trừ từ ví của bạn.',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.error,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -470,6 +573,7 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('ĐĂNG KÝ'),
           ),
         ],
@@ -480,13 +584,105 @@ class _TournamentDetailScreenState extends ConsumerState<TournamentDetailScreen>
       final success = await ref
           .read(tournamentsProvider.notifier)
           .registerTournament(widget.tournamentId);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng ký thành công!'),
-            backgroundColor: AppColors.success,
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng ký thành công!'),
+              backgroundColor: AppColors.success,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          // Reload tournament detail to update UI
+          await _loadData();
+        } else {
+          final errorMessage =
+              ref.read(tournamentsProvider).error ??
+              'Đăng ký thất bại. Vui lòng thử lại.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _cancelRegistration(TournamentModel tournament) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận hủy đăng ký'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Bạn có chắc chắn muốn hủy đăng ký giải đấu này?'),
+            const SizedBox(height: 12),
+            Text(
+              'Bạn sẽ nhận lại 50% phí đăng ký (${(tournament.entryFee * 0.5).toStringAsFixed(0)}đ).',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.warning,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '50% còn lại (${(tournament.entryFee * 0.5).toStringAsFixed(0)}đ) sẽ không được hoàn lại.',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('GIỮ ĐĂNG KÝ'),
           ),
-        );
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('HỦY ĐĂNG KÝ'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final result = await ref
+          .read(tournamentsProvider.notifier)
+          .cancelRegistration(widget.tournamentId);
+
+      if (mounted) {
+        if (result != null) {
+          print('DEBUG: Cancel result: $result');
+          final refundAmount = result['refundAmount'] ?? 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Hủy đăng ký thành công! Đã hoàn ${refundAmount.toStringAsFixed(0)}đ vào ví.',
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          // Don't reload - provider already updated state
+          // await _loadData();
+        } else {
+          final errorMessage =
+              ref.read(tournamentsProvider).error ??
+              'Hủy đăng ký thất bại. Vui lòng thử lại.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
   }

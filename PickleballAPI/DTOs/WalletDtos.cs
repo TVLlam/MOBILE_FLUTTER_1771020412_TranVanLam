@@ -25,3 +25,21 @@ public class WithdrawalDto
     public decimal Amount { get; set; }
     public string? Description { get; set; }
 }
+
+public class ApproveDepositDto
+{
+    public bool Approved { get; set; }
+    public string? Reason { get; set; }
+}
+
+public class UpdateMatchResultDto
+{
+    public int Score1 { get; set; }
+    public int Score2 { get; set; }
+    public string? Details { get; set; }
+}
+
+public class UpdateMatchStatusDto
+{
+    public string Status { get; set; } = string.Empty;
+}

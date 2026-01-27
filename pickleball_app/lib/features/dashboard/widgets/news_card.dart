@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/models.dart';
@@ -26,7 +27,7 @@ class NewsCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to news detail
+          context.go('/news-detail', extra: int.parse(news.id));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
