@@ -1,7 +1,7 @@
 class ApiConfig {
   // API Base URL - Port from API server (check console output)
   static const String baseUrl =
-      'http://localhost:5159'; // Updated to match running API server
+      'http://160.250.133.197:5159'; // Giữ nguyên hoặc thêm /api nếu cần
 
   // API Endpoints
   static const String authEndpoint = '/api/auth';

@@ -6,22 +6,22 @@ class AppConfig {
   // API Base URL - Auto-detect platform
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://localhost:5159/api';
+      return 'http://160.250.133.197:5159/api';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5159/api';
+      return 'http://160.250.133.197:5159/api';
     } else {
-      return 'http://localhost:5159/api';
+      return 'http://160.250.133.197:5159/api';
     }
   }
 
   // SignalR Hub URL - Auto-detect platform
   static String get signalRUrl {
     if (kIsWeb) {
-      return 'http://localhost:5159/pcmhub';
+      return 'http://160.250.133.197:5159/pcmhub';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5159/pcmhub';
+      return 'http://160.250.133.197:5159/pcmhub';
     } else {
-      return 'http://localhost:5159/pcmhub';
+      return 'http://160.250.133.197:5159/pcmhub';
     }
   }
 
